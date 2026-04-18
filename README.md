@@ -74,20 +74,72 @@ Built with **Streamlit, LangChain, Groq, Ollama, and FAISS**, this project focus
 ```bash
 git clone https://github.com/your-username/infowave-ai.git
 cd infowave-ai
+```
 
-2. Install Dependencies
+### 2. Install Dependencies
+```
 pip install -r requirements.txt
-3. Setup Environment Variables
-
+```
+### 3. Setup Environment Variables
+```
 Create a .env file:
 
 GROQ_API_KEY=your_groq_api_key
+```
+## 🧠 Setup Ollama (Required)
+
+Install and run Ollama:
+```Bash
+ollama pull nomic-embed-text
+ollama serve
+```
+## ▶️ Run the Application
+```
+streamlit run app.py
+```
+
+## 🧪 How It Works
+### 📄 PDF Workflow
+1. Upload PDF files
+2. Extract text using PyPDF
+3. Split into chunks
+4. Generate embeddings via Ollama
+5. Store in FAISS
+6. Query using:
+ - Full Read (MapReduce)
+ - Targeted Retrieval (MMR)
 
 
-📜 License
+### 🌐 Web Workflow
+1. Enter a URL
+2. Extract content using WebBaseLoader
+3. Chunk and embed
+4. Store in FAISS
+5. Query using selected mode
+
+
+## 🧩 Core Concepts
+-Retrieval-Augmented Generation (RAG)
+-FAISS vector similarity search
+-Maximum Marginal Relevance (MMR)
+-MapReduce-based summarization
+-Hierarchical reduction for large documents
+-Smart sampling (relevance + coverage)
+
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+  1. Fork the repository
+  2. Create a feature branch
+  3. Commit changes
+  4. Open a Pull Request
+
+## 📜 License
 
 This project is open-source and available under the MIT License.
 
-💡 Author
+## 💡 Author
 
 Built with focus on performance + accuracy in RAG systems.
