@@ -118,12 +118,12 @@ streamlit run app.py
 
 
 ## 🧩 Core Concepts
--Retrieval-Augmented Generation (RAG)
--FAISS vector similarity search
--Maximum Marginal Relevance (MMR)
--MapReduce-based summarization
--Hierarchical reduction for large documents
--Smart sampling (relevance + coverage)
+- Retrieval-Augmented Generation (RAG)
+- FAISS vector similarity search
+- Maximum Marginal Relevance (MMR)
+- MapReduce-based summarization
+- Hierarchical reduction for large documents
+- Smart sampling (relevance + coverage)
 
 
 ## 🤝 Contributing
