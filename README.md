@@ -81,9 +81,8 @@ cd infowave-ai
 pip install -r requirements.txt
 ```
 ### 3. Setup Environment Variables
-```
 Create a .env file:
-
+```
 GROQ_API_KEY=your_groq_api_key
 ```
 ## 🧠 Setup Ollama (Required)
@@ -106,8 +105,8 @@ streamlit run app.py
 4. Generate embeddings via Ollama
 5. Store in FAISS
 6. Query using:
- - Full Read (MapReduce)
- - Targeted Retrieval (MMR)
+  - Full Read (MapReduce)
+  - Targeted Retrieval (MMR)
 
 
 ### 🌐 Web Workflow
