@@ -99,14 +99,14 @@ streamlit run app.py
 
 ## 🧪 How It Works
 ### 📄 PDF Workflow
-1. Upload PDF files
-2. Extract text using PyPDF
-3. Split into chunks
-4. Generate embeddings via Ollama
-5. Store in FAISS
-6. Query using:
-  - Full Read (MapReduce)
-  - Targeted Retrieval (MMR)
+1. **Upload PDF files**
+2. **Extract text** using PyPDF
+3. **Split content into chunks** for efficient processing
+4. **Generate embeddings** using Ollama
+5. **Store vectors** in FAISS for fast retrieval
+6. **Query the data** using:
+   - 📖 **Full Read (MapReduce)** — comprehensive analysis
+   - 🎯 **Targeted Retrieval (MMR)** — fast and precise results
 
 
 ### 🌐 Web Workflow
