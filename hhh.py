@@ -26,10 +26,6 @@ from pypdf import PdfReader
 from gtts import gTTS
 
 # ─────────────────────────────────────────────
-#  SESSION PERSISTENCE (NEW)
-# ─────────────────────────────────────────────
-
-# ─────────────────────────────────────────────
 #  CONFIGURATION
 # ─────────────────────────────────────────────
 load_dotenv()
@@ -881,7 +877,7 @@ def build_from_pdfs(uploaded_files: list, embedding_model: str) -> dict:
             "num_files":  len(uploaded_files),
             "elapsed":    round(time.time() - t0, 2),
             "from_cache": True,
-            "cache_key":  cache_key,          # ✅ CHANGE 4: expose cache_key
+            "cache_key":  cache_key,
         }
 
     docs = load_pdfs_fast(uploaded_files)
@@ -902,7 +898,7 @@ def build_from_pdfs(uploaded_files: list, embedding_model: str) -> dict:
         "num_files":  len(uploaded_files),
         "elapsed":    round(time.time() - t0, 2),
         "from_cache": False,
-        "cache_key":  cache_key,              # ✅ CHANGE 4: expose cache_key
+        "cache_key":  cache_key,
     }
 
 
@@ -922,7 +918,7 @@ def build_from_url(url: str, embedding_model: str) -> dict:
             "num_docs":   len(cached_docs),
             "elapsed":    round(time.time() - t0, 2),
             "from_cache": True,
-            "cache_key":  cache_key,          # ✅ CHANGE 4: expose cache_key
+            "cache_key":  cache_key,
         }
 
     loader     = WebBaseLoader(url)
@@ -943,7 +939,7 @@ def build_from_url(url: str, embedding_model: str) -> dict:
         "num_docs":   len(split_docs),
         "elapsed":    round(time.time() - t0, 2),
         "from_cache": False,
-        "cache_key":  cache_key,              # ✅ CHANGE 4: expose cache_key
+        "cache_key":  cache_key,
     }
 
 
@@ -1082,6 +1078,9 @@ def ask_targeted(question: str, vectors, llm) -> dict:
 
 # ─────────────────────────────────────────────
 #  SESSION STATE
+#  NOTE: sessions is intentionally NOT loaded
+#  from disk — it only lives for the current
+#  browser session and clears on refresh/restart.
 # ─────────────────────────────────────────────
 defaults = {
     "source_type":       "PDF Documents",
@@ -1093,8 +1092,7 @@ defaults = {
     "source_label":      "",
     "tts_audio_path":    None,
     "tts_source_text":   "",
-    # ✅ CHANGE 2: Load persisted sessions from disk on startup
-    "sessions":         {},
+    "sessions":          {},          # ← in-memory only, cleared on new session
     "active_session_id": None,
 }
 for k, v in defaults.items():
@@ -1109,11 +1107,10 @@ def get_active_session():
     return sid, st.session_state.sessions.get(sid)
 
 
-# ✅ CHANGE 3: Persist to disk whenever a session is set
 def set_active_session(session_id, data):
+    """Store session in memory only — no disk persistence."""
     st.session_state.sessions[session_id] = data
     st.session_state.active_session_id = session_id
-    # save_sessions_to_disk()   # 🔥 persist to disk
 
 
 # ─────────────────────────────────────────────
@@ -1134,7 +1131,7 @@ with st.sidebar:
 
     # ── Theme Toggle ──
     st.markdown('<hr style="border-color:var(--border);margin:0.8rem 0;"/>', unsafe_allow_html=True)
-    current_icon = "☀️" if st.session_state.dark_mode else "🌙"
+    current_icon  = "☀️" if st.session_state.dark_mode else "🌙"
     current_label = "Switch to Light" if st.session_state.dark_mode else "Switch to Dark"
     if st.button(f"{current_icon}  {current_label}", use_container_width=True, key="theme_toggle"):
         st.session_state.dark_mode = not st.session_state.dark_mode
@@ -1192,28 +1189,21 @@ with st.sidebar:
 
     st.markdown('<hr style="border-color:var(--border);margin:1rem 0;"/>', unsafe_allow_html=True)
 
-    # ✅ CHANGE 6: Improved sidebar UI — clickable buttons per saved source
+    # ── Saved Sources (in-memory only) ──
     st.markdown("### 📚 Saved Sources")
+    st.caption("Cleared automatically when session ends.")
+
     if st.session_state.sessions:
         for sid, data in st.session_state.sessions.items():
             is_active = (st.session_state.active_session_id == sid)
-            icon = "📄" if data.get("source_type") == "PDF Documents" else "🌐"
-            label = data.get("label", sid)
-            display = f"{'▶ ' if is_active else ''}{icon} {label[:28]}{'…' if len(label) > 28 else ''}"
+            icon      = "📄" if data.get("source_type") == "PDF Documents" else "🌐"
+            label     = data.get("label", sid)
+            display   = f"{'▶ ' if is_active else ''}{icon} {label[:28]}{'…' if len(label) > 28 else ''}"
             if st.button(display, key=f"sess_{sid}", use_container_width=True):
                 st.session_state.active_session_id = sid
                 st.rerun()
     else:
         st.caption("No saved sources yet. Index a PDF or URL to create one.")
-
-    # ✅ CHANGE 5: Lazy-load FAISS vectors from disk if missing after session restore
-    active_id, active_session = get_active_session()
-    if active_session and "vectors" not in active_session:
-        embeddings = get_embeddings(embedding_choice)
-        vectors, docs = load_faiss_cache(active_session["cache_key"], embeddings)
-        if vectors is not None:
-            active_session["vectors"] = vectors
-            active_session["all_docs"] = docs
 
 
 # ─────────────────────────────────────────────
@@ -1311,7 +1301,6 @@ if src_type == "PDF Documents":
                     try:
                         result    = build_from_pdfs(uploaded_files, embedding_choice)
                         cache_key = result["cache_key"]
-                        # ✅ CHANGE 4 (PDF): store cache_key; keep vectors in memory for current session
                         data = {
                             "label":         session_id,
                             "source_type":   "PDF Documents",
@@ -1367,7 +1356,6 @@ else:
                     try:
                         result    = build_from_url(url, embedding_choice)
                         cache_key = result["cache_key"]
-                        # ✅ CHANGE 4 (URL): store cache_key; keep vectors in memory for current session
                         data = {
                             "label":         url,
                             "source_type":   "Website URL",
@@ -1424,7 +1412,7 @@ if ask_btn and active_session:
         st.warning("⚠️ Please type a question.")
     else:
         spinner_msg = (
-            "📖 searching for the Result"
+            "📖 Smart-sampling + parallel MapReduce across document…"
             if is_full else
             "🎯 MMR retrieval & synthesis…"
         )
@@ -1551,7 +1539,7 @@ theme_indicator = "🌙 Dark" if st.session_state.dark_mode else "☀️ Light"
 st.markdown(
     f'<p style="font-family:JetBrains Mono,monospace;font-size:0.65rem;'
     f'color:var(--muted);text-align:center;letter-spacing:0.1em;">'
-    f'· InfoWave AI · Powered by Groq · '
+    f'· InfoWave AI · Powered by Groq · {theme_indicator} Mode ·'
     f'</p>',
     unsafe_allow_html=True,
 )
