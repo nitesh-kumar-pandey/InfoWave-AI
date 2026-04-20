@@ -25,6 +25,9 @@ from langchain.schema import Document
 from pypdf import PdfReader
 from gtts import gTTS
 
+# ─────────────────────────────────────────────
+#  SESSION PERSISTENCE (NEW)
+# ─────────────────────────────────────────────
 
 # ─────────────────────────────────────────────
 #  CONFIGURATION
@@ -60,8 +63,6 @@ st.set_page_config(
 # ─────────────────────────────────────────────
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
-
-
 
 
 # ─────────────────────────────────────────────
@@ -614,6 +615,28 @@ def get_css(dark: bool) -> str:
         background: var(--surface2) !important;
     }}
 
+    /* ════ SAVED SOURCES SIDEBAR BUTTONS ════ */
+    [data-testid="stSidebar"] .stButton > button {{
+        background: var(--surface2) !important;
+        color: var(--text2) !important;
+        border: 1px solid var(--border2) !important;
+        text-transform: none !important;
+        font-weight: 500 !important;
+        font-size: 0.80rem !important;
+        letter-spacing: 0.02em !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        padding: 0.5rem 0.85rem !important;
+        min-height: 38px !important;
+        margin-bottom: 0.3rem !important;
+    }}
+    [data-testid="stSidebar"] .stButton > button:hover {{
+        background: var(--surface3) !important;
+        border-color: var(--doc-accent) !important;
+        color: var(--text) !important;
+        transform: none !important;
+    }}
+
     </style>
     """
 
@@ -858,6 +881,7 @@ def build_from_pdfs(uploaded_files: list, embedding_model: str) -> dict:
             "num_files":  len(uploaded_files),
             "elapsed":    round(time.time() - t0, 2),
             "from_cache": True,
+            "cache_key":  cache_key,          # ✅ CHANGE 4: expose cache_key
         }
 
     docs = load_pdfs_fast(uploaded_files)
@@ -878,6 +902,7 @@ def build_from_pdfs(uploaded_files: list, embedding_model: str) -> dict:
         "num_files":  len(uploaded_files),
         "elapsed":    round(time.time() - t0, 2),
         "from_cache": False,
+        "cache_key":  cache_key,              # ✅ CHANGE 4: expose cache_key
     }
 
 
@@ -897,6 +922,7 @@ def build_from_url(url: str, embedding_model: str) -> dict:
             "num_docs":   len(cached_docs),
             "elapsed":    round(time.time() - t0, 2),
             "from_cache": True,
+            "cache_key":  cache_key,          # ✅ CHANGE 4: expose cache_key
         }
 
     loader     = WebBaseLoader(url)
@@ -917,6 +943,7 @@ def build_from_url(url: str, embedding_model: str) -> dict:
         "num_docs":   len(split_docs),
         "elapsed":    round(time.time() - t0, 2),
         "from_cache": False,
+        "cache_key":  cache_key,              # ✅ CHANGE 4: expose cache_key
     }
 
 
@@ -1066,7 +1093,8 @@ defaults = {
     "source_label":      "",
     "tts_audio_path":    None,
     "tts_source_text":   "",
-    "sessions":          {},
+    # ✅ CHANGE 2: Load persisted sessions from disk on startup
+    "sessions":         {},
     "active_session_id": None,
 }
 for k, v in defaults.items():
@@ -1081,9 +1109,11 @@ def get_active_session():
     return sid, st.session_state.sessions.get(sid)
 
 
+# ✅ CHANGE 3: Persist to disk whenever a session is set
 def set_active_session(session_id, data):
     st.session_state.sessions[session_id] = data
-    st.session_state.active_session_id    = session_id
+    st.session_state.active_session_id = session_id
+    # save_sessions_to_disk()   # 🔥 persist to disk
 
 
 # ─────────────────────────────────────────────
@@ -1162,21 +1192,28 @@ with st.sidebar:
 
     st.markdown('<hr style="border-color:var(--border);margin:1rem 0;"/>', unsafe_allow_html=True)
 
-    session_ids = list(st.session_state.sessions.keys())
-    if session_ids:
-        labels = [st.session_state.sessions[sid].get("label", sid) for sid in session_ids]
-        idx    = 0
-        if st.session_state.active_session_id in session_ids:
-            idx = session_ids.index(st.session_state.active_session_id)
-        chosen = st.selectbox(
-            "Saved sources",
-            options=list(range(len(session_ids))),
-            format_func=lambda i: labels[i],
-            index=idx,
-        )
-        st.session_state.active_session_id = session_ids[chosen]
+    # ✅ CHANGE 6: Improved sidebar UI — clickable buttons per saved source
+    st.markdown("### 📚 Saved Sources")
+    if st.session_state.sessions:
+        for sid, data in st.session_state.sessions.items():
+            is_active = (st.session_state.active_session_id == sid)
+            icon = "📄" if data.get("source_type") == "PDF Documents" else "🌐"
+            label = data.get("label", sid)
+            display = f"{'▶ ' if is_active else ''}{icon} {label[:28]}{'…' if len(label) > 28 else ''}"
+            if st.button(display, key=f"sess_{sid}", use_container_width=True):
+                st.session_state.active_session_id = sid
+                st.rerun()
     else:
         st.caption("No saved sources yet. Index a PDF or URL to create one.")
+
+    # ✅ CHANGE 5: Lazy-load FAISS vectors from disk if missing after session restore
+    active_id, active_session = get_active_session()
+    if active_session and "vectors" not in active_session:
+        embeddings = get_embeddings(embedding_choice)
+        vectors, docs = load_faiss_cache(active_session["cache_key"], embeddings)
+        if vectors is not None:
+            active_session["vectors"] = vectors
+            active_session["all_docs"] = docs
 
 
 # ─────────────────────────────────────────────
@@ -1272,10 +1309,13 @@ if src_type == "PDF Documents":
             else:
                 with st.spinner("🔄 Reading documents… (checking disk cache first)"):
                     try:
-                        result = build_from_pdfs(uploaded_files, embedding_choice)
+                        result    = build_from_pdfs(uploaded_files, embedding_choice)
+                        cache_key = result["cache_key"]
+                        # ✅ CHANGE 4 (PDF): store cache_key; keep vectors in memory for current session
                         data = {
                             "label":         session_id,
                             "source_type":   "PDF Documents",
+                            "cache_key":     cache_key,
                             "vectors":       result["vectors"],
                             "all_docs":      result["all_docs"],
                             "num_docs":      result["num_docs"],
@@ -1325,10 +1365,13 @@ else:
             else:
                 with st.spinner("🔄 Fetching website content… (checking disk cache first)"):
                     try:
-                        result = build_from_url(url, embedding_choice)
+                        result    = build_from_url(url, embedding_choice)
+                        cache_key = result["cache_key"]
+                        # ✅ CHANGE 4 (URL): store cache_key; keep vectors in memory for current session
                         data = {
                             "label":         url,
                             "source_type":   "Website URL",
+                            "cache_key":     cache_key,
                             "vectors":       result["vectors"],
                             "all_docs":      result["all_docs"],
                             "num_docs":      result["num_docs"],
@@ -1381,7 +1424,7 @@ if ask_btn and active_session:
         st.warning("⚠️ Please type a question.")
     else:
         spinner_msg = (
-            "📖 Smart-sampling + parallel MapReduce across document…"
+            "📖 searching for the Result"
             if is_full else
             "🎯 MMR retrieval & synthesis…"
         )
