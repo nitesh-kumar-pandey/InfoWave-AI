@@ -399,38 +399,7 @@ st.markdown(
         margin-left: 0.5rem;
         vertical-align: middle;
     }
-
     
-    [data-testid="collapsedControl"] {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
-        position: fixed !important;
-        top: 1rem !important;
-        left: 1rem !important;
-        z-index: 999999 !important;
-        background: #0f1117 !important;
-        border: 1px solid #262a3a !important;
-        border-radius: 8px !important;
-        width: 36px !important;
-        height: 36px !important;
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        transition: background 0.2s ease !important;
-    }
-    [data-testid="collapsedControl"]:hover {
-        background: #161820 !important;
-        border-color: #e8704a !important;
-    }
-    [data-testid="collapsedControl"] svg {
-        color: #dde2f0 !important;
-        fill: #dde2f0 !important;
-        width: 18px !important;
-        height: 18px !important;
-    }
-
     </style>
     """,
     unsafe_allow_html=True,
