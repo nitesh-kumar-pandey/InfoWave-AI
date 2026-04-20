@@ -56,324 +56,569 @@ st.set_page_config(
 
 
 # ─────────────────────────────────────────────
-#  CUSTOM CSS — sidebar always visible, toggle hidden
+#  SESSION STATE — THEME
 # ─────────────────────────────────────────────
-st.markdown(
-    """
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True
+
+
+
+
+# ─────────────────────────────────────────────
+#  CUSTOM CSS — ADAPTIVE LIGHT / DARK THEMES
+# ─────────────────────────────────────────────
+def get_css(dark: bool) -> str:
+    if dark:
+        vars_block = """
+    :root {
+        --bg:              #07080c;
+        --surface:         #0f1117;
+        --surface2:        #161820;
+        --surface3:        #1a1d28;
+        --border:          #1e2130;
+        --border2:         #262a3a;
+        --doc-accent:      #e8704a;
+        --doc-accent2:     #f08060;
+        --web-accent:      #4ac8e8;
+        --gold:            #f0c060;
+        --success:         #50e89a;
+        --text:            #dde2f0;
+        --text2:           #a0a8c0;
+        --muted:           #5a6080;
+        --muted2:          #3a4060;
+        --shadow:          rgba(0,0,0,0.55);
+        --shadow2:         rgba(0,0,0,0.30);
+        --input-bg:        #07080c;
+        --tag-doc-bg:      rgba(232,112,74,0.12);
+        --tag-doc-border:  rgba(232,112,74,0.35);
+        --tag-web-bg:      rgba(74,200,232,0.10);
+        --tag-web-border:  rgba(74,200,232,0.35);
+        --cache-bg:        rgba(80,232,154,0.10);
+        --cache-border:    rgba(80,232,154,0.35);
+        --chunk-bg:        #07080c;
+        --glow-doc:        rgba(232,112,74,0.13);
+        --glow-web:        rgba(74,200,232,0.10);
+        --radius:          14px;
+        --radius-sm:       10px;
+    }"""
+    else:
+        vars_block = """
+    :root {
+        --bg:              #f0f2f8;
+        --surface:         #ffffff;
+        --surface2:        #f7f8fc;
+        --surface3:        #eceef6;
+        --border:          #d8dcea;
+        --border2:         #c2c8dc;
+        --doc-accent:      #c04010;
+        --doc-accent2:     #d85020;
+        --web-accent:      #0878a8;
+        --gold:            #986000;
+        --success:         #166638;
+        --text:            #12182e;
+        --text2:           #3a4260;
+        --muted:           #6878a0;
+        --muted2:          #98a0bc;
+        --shadow:          rgba(10,20,60,0.14);
+        --shadow2:         rgba(10,20,60,0.07);
+        --input-bg:        #ffffff;
+        --tag-doc-bg:      rgba(192,64,16,0.08);
+        --tag-doc-border:  rgba(192,64,16,0.28);
+        --tag-web-bg:      rgba(8,120,168,0.08);
+        --tag-web-border:  rgba(8,120,168,0.28);
+        --cache-bg:        rgba(22,102,56,0.08);
+        --cache-border:    rgba(22,102,56,0.28);
+        --chunk-bg:        #f7f8fc;
+        --glow-doc:        rgba(192,64,16,0.06);
+        --glow-web:        rgba(8,120,168,0.06);
+        --radius:          14px;
+        --radius-sm:       10px;
+    }"""
+
+    return f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@300;400;500&display=swap');
 
-    :root {
-        --bg:         #07080c;
-        --surface:    #0f1117;
-        --surface2:   #161820;
-        --border:     #1e2130;
-        --border2:    #262a3a;
-        --doc-accent: #e8704a;
-        --web-accent: #4ac8e8;
-        --gold:       #f0c060;
-        --success:    #50e89a;
-        --text:       #dde2f0;
-        --muted:      #5a6080;
-        --muted2:     #3a4060;
-        --radius:     12px;
-        --radius-sm:  8px;
-    }
+    {vars_block}
 
-    html, body, [class*="css"] {
-        font-family: 'Outfit', sans-serif;
+    /* ════ BASE RESET ════ */
+    html, body, [class*="css"] {{
+        font-family: 'Outfit', sans-serif !important;
         background-color: var(--bg) !important;
         color: var(--text) !important;
-    }
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }}
 
-    /* ── Hide ALL sidebar toggle / collapse controls ── */
+    #MainMenu, footer, header {{ visibility: hidden !important; }}
+
+    /* ════ SIDEBAR — always visible, no toggle ════ */
     [data-testid="collapsedControl"],
     [data-testid="baseButton-headerNoPadding"],
     button[kind="header"],
     [data-testid="stSidebarCollapseButton"],
-    section[data-testid="stSidebar"] > div:first-child > div:first-child > button {
+    section[data-testid="stSidebar"] > div:first-child > div:first-child > button {{
         display: none !important;
         visibility: hidden !important;
         pointer-events: none !important;
         width: 0 !important;
         height: 0 !important;
         overflow: hidden !important;
-    }
+    }}
 
-    /* ── Sidebar always expanded, never collapses ── */
-    [data-testid="stSidebar"] {
+    [data-testid="stSidebar"] {{
         transform: none !important;
-        width: 22rem !important;
-        min-width: 22rem !important;
-        max-width: 22rem !important;
+        width: 17rem !important;
+        min-width: 17rem !important;
+        max-width: 17rem !important;
         left: 0 !important;
         visibility: visible !important;
         display: block !important;
         background: var(--surface) !important;
         border-right: 1px solid var(--border) !important;
-    }
+        box-shadow: 3px 0 20px var(--shadow2) !important;
+        transition: background 0.3s ease, border-color 0.3s ease;
+    }}
 
-    #MainMenu, footer, header { visibility: hidden; }
+    [data-testid="stSidebar"] .block-container {{
+        padding: 1.4rem 1.1rem !important;
+        max-width: 100% !important;
+    }}
 
-    .block-container {
-        padding: 2rem 2.5rem !important;
-        max-width: 1080px;
-    }
+    /* ════ MAIN CONTENT — full width ════ */
+    .block-container {{
+        padding: 2rem 2.5rem 3rem 2.5rem !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        background: var(--bg) !important;
+    }}
 
-    [data-testid="stSidebar"] .block-container {
-        padding: 1.5rem 1rem !important;
-    }
+    section.main > div {{
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }}
 
-    .hero-wrap {
+    [data-testid="stHorizontalBlock"] {{
+        gap: 1rem !important;
+        align-items: stretch !important;
+    }}
+
+    /* ════ HERO ════ */
+    .hero-wrap {{
         position: relative;
-        padding: 2.8rem 0 1.5rem;
+        padding: 3rem 0 2rem;
         overflow: hidden;
-    }
-    .hero-bg-glow {
+        width: 100%;
+    }}
+    .hero-bg-glow {{
         position: absolute;
-        top: -60px; left: -80px;
+        top: -80px; left: -100px;
+        width: 600px; height: 400px;
+        background: radial-gradient(ellipse, var(--glow-doc) 0%, transparent 68%);
+        pointer-events: none;
+    }}
+    .hero-bg-glow2 {{
+        position: absolute;
+        top: -60px; right: -80px;
         width: 500px; height: 350px;
-        background: radial-gradient(ellipse, rgba(232,112,74,0.12) 0%, transparent 70%);
+        background: radial-gradient(ellipse, var(--glow-web) 0%, transparent 68%);
         pointer-events: none;
-    }
-    .hero-bg-glow2 {
-        position: absolute;
-        top: -40px; right: -60px;
-        width: 400px; height: 300px;
-        background: radial-gradient(ellipse, rgba(74,200,232,0.10) 0%, transparent 70%);
-        pointer-events: none;
-    }
-    .hero-eyebrow {
+    }}
+    .hero-eyebrow {{
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.68rem;
+        font-size: 0.70rem;
         font-weight: 400;
-        letter-spacing: 0.22em;
+        letter-spacing: 0.24em;
         color: var(--muted);
         text-transform: uppercase;
-        margin-bottom: 0.8rem;
-    }
-    .hero-title {
+        margin-bottom: 0.9rem;
+    }}
+    .hero-title {{
         font-family: 'Outfit', sans-serif;
-        font-size: clamp(2.8rem, 6vw, 4.2rem);
+        font-size: clamp(3.2rem, 6.5vw, 5.2rem);
         font-weight: 900;
-        letter-spacing: -2px;
+        letter-spacing: -3px;
         line-height: 1.0;
         margin: 0;
-    }
-    .hero-title .doc-c { color: var(--doc-accent); }
-    .hero-title .web-c { color: var(--web-accent); }
-    .hero-title .plus  { color: var(--muted2); font-weight: 300; margin: 0 0.2em; }
-    .hero-sub {
+    }}
+    .hero-title .doc-c {{ color: var(--doc-accent); }}
+    .hero-title .web-c {{ color: var(--web-accent); }}
+    .hero-sub {{
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.76rem;
+        font-size: 0.80rem;
         color: var(--muted);
-        margin-top: 0.9rem;
-        letter-spacing: 0.06em;
-    }
+        margin-top: 1rem;
+        letter-spacing: 0.07em;
+    }}
 
-    .card {
+    /* ════ CARDS ════ */
+    .card {{
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        padding: 1.5rem 1.8rem;
-        margin-bottom: 1rem;
+        padding: 1.8rem 2rem;
+        margin-bottom: 1.2rem;
         position: relative;
         overflow: hidden;
-    }
-    .card::before {
+        box-shadow: 0 4px 20px var(--shadow2);
+        transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+    }}
+    .card::before {{
         content: '';
         position: absolute;
         top: 0; left: 0; right: 0;
-        height: 2px;
+        height: 3px;
         background: linear-gradient(90deg, transparent, var(--border2), transparent);
-    }
-    .card.doc-card::before   { background: linear-gradient(90deg, transparent, var(--doc-accent), transparent); opacity: 0.4; }
-    .card.web-card::before   { background: linear-gradient(90deg, transparent, var(--web-accent), transparent); opacity: 0.4; }
-    .card.answer-card::before { background: linear-gradient(90deg, var(--doc-accent), var(--web-accent)); opacity: 0.6; }
+        border-radius: var(--radius) var(--radius) 0 0;
+    }}
+    .card.doc-card::before {{
+        background: linear-gradient(90deg, transparent 0%, var(--doc-accent) 50%, transparent 100%);
+        opacity: 0.6;
+    }}
+    .card.web-card::before {{
+        background: linear-gradient(90deg, transparent 0%, var(--web-accent) 50%, transparent 100%);
+        opacity: 0.6;
+    }}
+    .card.answer-card::before {{
+        background: linear-gradient(90deg, var(--doc-accent) 0%, var(--web-accent) 100%);
+        opacity: 0.75;
+    }}
 
-    .card-label {
+    .card-label {{
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.65rem;
-        font-weight: 500;
-        letter-spacing: 0.2em;
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.20em;
         text-transform: uppercase;
-        margin-bottom: 1rem;
-    }
-    .card-label.doc-label { color: var(--doc-accent); }
-    .card-label.web-label { color: var(--web-accent); }
-    .card-label.ask-label { color: var(--gold); }
-    .card-label.ans-label { color: var(--success); }
+        margin-bottom: 1.2rem;
+        display: block;
+    }}
+    .card-label.doc-label {{ color: var(--doc-accent); }}
+    .card-label.web-label {{ color: var(--web-accent); }}
+    .card-label.ask-label {{ color: var(--gold); }}
+    .card-label.ans-label {{ color: var(--success); }}
 
+    /* ════ INPUTS ════ */
     .stTextInput > div > div > input,
-    .stTextArea  > div > div > textarea {
-        background: var(--bg) !important;
-        border: 1px solid var(--border2) !important;
+    .stTextArea  > div > div > textarea {{
+        background: var(--input-bg) !important;
+        border: 1.5px solid var(--border2) !important;
         border-radius: var(--radius-sm) !important;
         color: var(--text) !important;
         font-family: 'JetBrains Mono', monospace !important;
-        font-size: 0.88rem !important;
-        padding: 0.75rem 1rem !important;
-    }
+        font-size: 0.92rem !important;
+        padding: 0.85rem 1.1rem !important;
+        min-height: 50px !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        box-shadow: 0 1px 4px var(--shadow2) !important;
+    }}
+    .stTextInput > div > div > input::placeholder,
+    .stTextArea  > div > div > textarea::placeholder {{
+        color: var(--muted) !important;
+        opacity: 1 !important;
+    }}
     .stTextInput > div > div > input:focus,
-    .stTextArea  > div > div > textarea:focus {
+    .stTextArea  > div > div > textarea:focus {{
         border-color: var(--web-accent) !important;
-        box-shadow: 0 0 0 3px rgba(74,200,232,0.10) !important;
-    }
+        box-shadow: 0 0 0 3px rgba(74,200,232,0.14) !important;
+        outline: none !important;
+    }}
 
-    .stButton > button {
-        background: linear-gradient(135deg, var(--doc-accent) 0%, #d45a30 100%) !important;
+    /* ════ BUTTONS ════ */
+    .stButton > button {{
+        background: linear-gradient(135deg, var(--doc-accent) 0%, var(--doc-accent2) 100%) !important;
         color: #fff !important;
         border: none !important;
         border-radius: var(--radius-sm) !important;
         font-family: 'Outfit', sans-serif !important;
         font-weight: 700 !important;
         font-size: 0.88rem !important;
-        letter-spacing: 0.05em !important;
-        padding: 0.6rem 1.5rem !important;
+        letter-spacing: 0.07em !important;
+        padding: 0.75rem 1.4rem !important;
+        min-height: 48px !important;
+        width: 100% !important;
         transition: all 0.2s ease !important;
         text-transform: uppercase !important;
-    }
-    .stButton > button:hover {
-        opacity: 0.9 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 6px 20px rgba(232,112,74,0.3) !important;
-    }
-    .stButton > button:active  { transform: translateY(0) !important; }
-    .stButton > button:disabled {
+        box-shadow: 0 3px 12px var(--shadow2) !important;
+        cursor: pointer !important;
+    }}
+    .stButton > button:hover {{
+        opacity: 0.91 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 24px var(--shadow) !important;
+    }}
+    .stButton > button:active {{
+        transform: translateY(0) !important;
+        box-shadow: 0 2px 8px var(--shadow2) !important;
+    }}
+    .stButton > button:disabled {{
         background: var(--surface2) !important;
         color: var(--muted) !important;
-        opacity: 0.5 !important;
+        opacity: 0.55 !important;
         transform: none !important;
         box-shadow: none !important;
-    }
+        cursor: not-allowed !important;
+    }}
 
-    [data-testid="stFileUploader"] {
-        background: var(--bg) !important;
-        border: 1.5px dashed var(--border2) !important;
+    /* ════ FILE UPLOADER ════ */
+    [data-testid="stFileUploader"] {{
+        background: var(--input-bg) !important;
+        border: 2px dashed var(--border2) !important;
         border-radius: var(--radius-sm) !important;
-    }
-    [data-testid="stFileUploader"]:hover { border-color: var(--doc-accent) !important; }
+        padding: 1rem !important;
+        transition: border-color 0.2s ease, background 0.2s ease;
+    }}
+    [data-testid="stFileUploader"]:hover {{
+        border-color: var(--doc-accent) !important;
+        background: var(--surface2) !important;
+    }}
+    [data-testid="stFileUploader"] * {{
+        color: var(--text2) !important;
+    }}
 
-    .answer-content {
-        font-size: 0.96rem;
-        line-height: 1.85;
-        color: var(--text);
-        white-space: pre-wrap;
-    }
-
-    .file-tag {
-        display: inline-block;
-        background: rgba(232,112,74,0.1);
-        border: 1px solid rgba(232,112,74,0.3);
-        border-radius: 6px;
-        padding: 0.15rem 0.7rem;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.72rem;
-        color: var(--doc-accent);
-        margin: 0.2rem 0.3rem 0.2rem 0;
-    }
-    .url-tag {
-        display: inline-block;
-        background: rgba(74,200,232,0.1);
-        border: 1px solid rgba(74,200,232,0.3);
-        border-radius: 6px;
-        padding: 0.15rem 0.7rem;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.72rem;
-        color: var(--web-accent);
-        margin: 0.2rem 0.3rem 0.2rem 0;
-        word-break: break-all;
-    }
-
-    .badge-ready   { color: var(--success); font-weight: 600; }
-    .badge-pending { color: var(--gold);    font-weight: 600; }
-
-    .stSelectbox > div > div {
-        background: var(--bg) !important;
-        border: 1px solid var(--border2) !important;
+    /* ════ SELECTBOX ════ */
+    .stSelectbox > div > div {{
+        background: var(--input-bg) !important;
+        border: 1.5px solid var(--border2) !important;
         border-radius: var(--radius-sm) !important;
         color: var(--text) !important;
         font-family: 'JetBrains Mono', monospace !important;
-        font-size: 0.85rem !important;
-    }
+        font-size: 0.83rem !important;
+        min-height: 44px !important;
+        transition: border-color 0.2s ease;
+    }}
+    .stSelectbox > div > div:focus-within {{
+        border-color: var(--web-accent) !important;
+    }}
+    [data-baseweb="select"] [role="listbox"] {{
+        background: var(--surface) !important;
+        border: 1px solid var(--border2) !important;
+        border-radius: var(--radius-sm) !important;
+    }}
+    [data-baseweb="select"] [role="option"] {{
+        background: var(--surface) !important;
+        color: var(--text) !important;
+    }}
+    [data-baseweb="select"] [role="option"]:hover {{
+        background: var(--surface2) !important;
+    }}
 
-    .stRadio > div { gap: 0.5rem !important; }
-    .stRadio label { font-size: 0.88rem !important; font-family: 'Outfit', sans-serif !important; }
+    /* ════ RADIO ════ */
+    .stRadio > div {{ gap: 0.6rem !important; }}
+    .stRadio label {{
+        font-size: 0.90rem !important;
+        font-family: 'Outfit', sans-serif !important;
+        color: var(--text) !important;
+        cursor: pointer !important;
+    }}
+    .stRadio [data-testid="stMarkdownContainer"] p {{
+        color: var(--text) !important;
+    }}
 
-    .streamlit-expanderHeader {
+    /* ════ EXPANDER ════ */
+    .streamlit-expanderHeader {{
         background: var(--surface2) !important;
         border: 1px solid var(--border2) !important;
         border-radius: var(--radius-sm) !important;
         font-family: 'JetBrains Mono', monospace !important;
-        font-size: 0.78rem !important;
-        color: var(--muted) !important;
-    }
-    .streamlit-expanderContent {
+        font-size: 0.80rem !important;
+        color: var(--text2) !important;
+        padding: 0.8rem 1rem !important;
+    }}
+    .streamlit-expanderContent {{
         background: var(--surface2) !important;
         border: 1px solid var(--border2) !important;
         border-top: none !important;
-    }
+        border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important;
+        padding: 1rem !important;
+    }}
 
-    .doc-chunk {
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 1rem 1.2rem;
-        margin-bottom: 0.8rem;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.8rem;
-        color: var(--muted);
-        line-height: 1.7;
-    }
-    .doc-chunk-num {
-        font-size: 0.62rem;
-        color: var(--gold);
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        margin-bottom: 0.5rem;
-    }
+    /* ════ ANSWER CONTENT ════ */
+    .answer-content {{
+        font-size: 1.00rem;
+        line-height: 1.90;
+        color: var(--text);
+        white-space: pre-wrap;
+    }}
 
-    .source-bar {
+    /* ════ SOURCE BAR ════ */
+    .source-bar {{
         background: var(--surface2);
         border: 1px solid var(--border);
         border-radius: var(--radius-sm);
-        padding: 0.7rem 1.2rem;
-        margin-bottom: 1rem;
+        padding: 0.75rem 1.3rem;
+        margin-bottom: 1.1rem;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.75rem;
-        color: var(--muted);
+        font-size: 0.76rem;
+        color: var(--text2);
         display: flex;
         align-items: center;
-        gap: 0.8rem;
-    }
-    .source-dot {
-        width: 8px; height: 8px;
+        gap: 0.9rem;
+        box-shadow: 0 1px 6px var(--shadow2);
+        flex-wrap: wrap;
+    }}
+    .source-dot {{
+        width: 9px; height: 9px;
         border-radius: 50%;
         flex-shrink: 0;
-    }
-    .source-dot.doc { background: var(--doc-accent); box-shadow: 0 0 8px var(--doc-accent); }
-    .source-dot.web { background: var(--web-accent); box-shadow: 0 0 8px var(--web-accent); }
+    }}
+    .source-dot.doc {{
+        background: var(--doc-accent);
+        box-shadow: 0 0 8px var(--doc-accent);
+    }}
+    .source-dot.web {{
+        background: var(--web-accent);
+        box-shadow: 0 0 8px var(--web-accent);
+    }}
 
-    .divider { border: none; border-top: 1px solid var(--border); margin: 1.8rem 0; }
-
-    .stSpinner > div { border-top-color: var(--doc-accent) !important; }
-
-    .cache-badge {
-        display: inline-block;
-        background: rgba(80,232,154,0.1);
-        border: 1px solid rgba(80,232,154,0.3);
-        border-radius: 6px;
-        padding: 0.12rem 0.6rem;
+    /* ════ DOC CHUNKS ════ */
+    .doc-chunk {{
+        background: var(--chunk-bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.1rem 1.4rem;
+        margin-bottom: 0.9rem;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.65rem;
-        color: #50e89a;
-        margin-left: 0.5rem;
+        font-size: 0.81rem;
+        color: var(--text2);
+        line-height: 1.75;
+    }}
+    .doc-chunk-num {{
+        font-size: 0.63rem;
+        color: var(--gold);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        margin-bottom: 0.6rem;
+        font-weight: 700;
+    }}
+
+    /* ════ TAGS & BADGES ════ */
+    .file-tag {{
+        display: inline-block;
+        background: var(--tag-doc-bg);
+        border: 1px solid var(--tag-doc-border);
+        border-radius: 6px;
+        padding: 0.18rem 0.75rem;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.73rem;
+        color: var(--doc-accent);
+        margin: 0.25rem 0.3rem 0.25rem 0;
+    }}
+    .url-tag {{
+        display: inline-block;
+        background: var(--tag-web-bg);
+        border: 1px solid var(--tag-web-border);
+        border-radius: 6px;
+        padding: 0.18rem 0.75rem;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.73rem;
+        color: var(--web-accent);
+        margin: 0.25rem 0.3rem 0.25rem 0;
+        word-break: break-all;
+    }}
+    .cache-badge {{
+        display: inline-block;
+        background: var(--cache-bg);
+        border: 1px solid var(--cache-border);
+        border-radius: 6px;
+        padding: 0.14rem 0.65rem;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.66rem;
+        color: var(--success);
+        margin-left: 0.6rem;
         vertical-align: middle;
-    }
+        font-weight: 600;
+    }}
+    .badge-ready   {{ color: var(--success); font-weight: 600; }}
+    .badge-pending {{ color: var(--gold);    font-weight: 600; }}
+
+    /* ════ ALERTS ════ */
+    .stAlert,
+    div[data-testid="stAlert"] {{
+        background: var(--surface2) !important;
+        border-color: var(--border2) !important;
+        color: var(--text) !important;
+        border-radius: var(--radius-sm) !important;
+    }}
+    .stAlert p,
+    div[data-testid="stAlert"] p {{
+        color: var(--text) !important;
+    }}
+
+    /* ════ CAPTIONS & MARKDOWN ════ */
+    .stCaption, .stCaption p, small {{
+        color: var(--muted) !important;
+    }}
+    .stMarkdown p,
+    .stMarkdown li,
+    .stMarkdown span {{
+        color: var(--text) !important;
+    }}
+
+    /* ════ SIDEBAR TEXT ════ */
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] .stMarkdown p,
+    [data-testid="stSidebar"] .stCaption {{
+        color: var(--text2) !important;
+    }}
+
+    /* ════ STATUS WIDGET ════ */
+    [data-testid="stStatus"] {{
+        background: var(--surface2) !important;
+        border: 1px solid var(--border2) !important;
+        color: var(--text2) !important;
+        border-radius: var(--radius-sm) !important;
+    }}
+    [data-testid="stStatus"] p {{
+        color: var(--text2) !important;
+    }}
+
+    /* ════ FORM ════ */
+    [data-testid="stForm"] {{
+        border: 1px solid var(--border) !important;
+        background: var(--surface2) !important;
+        border-radius: var(--radius-sm) !important;
+        padding: 0.6rem 0.8rem !important;
+    }}
+
+    /* ════ SPINNER ════ */
+    .stSpinner > div {{
+        border-top-color: var(--doc-accent) !important;
+    }}
+
+    /* ════ DIVIDER ════ */
+    .divider {{
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2rem 0;
+    }}
+
+    /* ════ PROGRESS BAR ════ */
+    [data-testid="stProgressBar"] > div > div {{
+        background: linear-gradient(90deg, var(--doc-accent), var(--web-accent)) !important;
+        border-radius: 4px;
+    }}
+    [data-testid="stProgressBar"] > div {{
+        background: var(--surface3) !important;
+        border-radius: 4px;
+    }}
+
+    /* ════ AUDIO PLAYER ════ */
+    audio {{
+        width: 100% !important;
+        border-radius: var(--radius-sm) !important;
+        background: var(--surface2) !important;
+    }}
+
     </style>
-    """,
-    unsafe_allow_html=True,
-)
+    """
+
+# Inject CSS based on current theme
+st.markdown(get_css(st.session_state.dark_mode), unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────
@@ -848,15 +1093,24 @@ with st.sidebar:
     st.markdown(
         '<p style="font-family:Outfit,sans-serif;font-size:1.2rem;font-weight:900;'
         'letter-spacing:-0.5px;margin-bottom:0;">'
-        '<span style="color:#e8704a;">Info</span>'
-        '<span style="color:#4ac8e8;">Wave</span>'
-        '<span style="color:#f0c060;">AI</span>'
+        '<span style="color:var(--doc-accent);">Info</span>'
+        '<span style="color:var(--web-accent);">Wave</span>'
+        '<span style="color:var(--gold);">AI</span>'
         '</p>'
         '<p style="font-family:JetBrains Mono,monospace;font-size:0.65rem;'
-        'color:#5a6080;letter-spacing:0.15em;margin-top:0.1rem;">FULL-READ</p>',
+        'color:var(--muted);letter-spacing:0.15em;margin-top:0.1rem;">FULL-READ RAG</p>',
         unsafe_allow_html=True,
     )
-    st.markdown('<hr style="border-color:#1e2130;margin:1rem 0;"/>', unsafe_allow_html=True)
+
+    # ── Theme Toggle ──
+    st.markdown('<hr style="border-color:var(--border);margin:0.8rem 0;"/>', unsafe_allow_html=True)
+    current_icon = "☀️" if st.session_state.dark_mode else "🌙"
+    current_label = "Switch to Light" if st.session_state.dark_mode else "Switch to Dark"
+    if st.button(f"{current_icon}  {current_label}", use_container_width=True, key="theme_toggle"):
+        st.session_state.dark_mode = not st.session_state.dark_mode
+        st.rerun()
+
+    st.markdown('<hr style="border-color:var(--border);margin:1rem 0;"/>', unsafe_allow_html=True)
 
     model_choice = st.selectbox(
         "LLM Model",
@@ -876,7 +1130,7 @@ with st.sidebar:
         help="Downloaded from HuggingFace Hub and cached locally. No Ollama needed.",
     )
 
-    st.markdown('<hr style="border-color:#1e2130;margin:1rem 0;"/>', unsafe_allow_html=True)
+    st.markdown('<hr style="border-color:var(--border);margin:1rem 0;"/>', unsafe_allow_html=True)
 
     query_mode = st.radio(
         "Query Mode",
@@ -885,12 +1139,12 @@ with st.sidebar:
     )
     is_full = "Full" in query_mode
 
-    st.markdown('<hr style="border-color:#1e2130;margin:1rem 0;"/>', unsafe_allow_html=True)
+    st.markdown('<hr style="border-color:var(--border);margin:1rem 0;"/>', unsafe_allow_html=True)
 
     cache_files = list(FAISS_CACHE_DIR.glob("*.docs.pkl"))
     st.markdown(
-        f'<p style="font-family:JetBrains Mono,monospace;font-size:0.68rem;color:#3a4060;">'
-        f'💾 Disk cache: <span style="color:#50e89a;">{len(cache_files)} indexes saved</span>'
+        f'<p style="font-family:JetBrains Mono,monospace;font-size:0.68rem;color:var(--muted);">'
+        f'💾 Disk cache: <span style="color:var(--success);">{len(cache_files)} indexes saved</span>'
         f'</p>',
         unsafe_allow_html=True,
     )
@@ -906,7 +1160,7 @@ with st.sidebar:
                 pass
         st.rerun()
 
-    st.markdown('<hr style="border-color:#1e2130;margin:1rem 0;"/>', unsafe_allow_html=True)
+    st.markdown('<hr style="border-color:var(--border);margin:1rem 0;"/>', unsafe_allow_html=True)
 
     session_ids = list(st.session_state.sessions.keys())
     if session_ids:
@@ -936,7 +1190,7 @@ st.markdown(
     '<h1 class="hero-title">'
     '<span class="doc-c">Info</span>'
     '<span class="web-c">Wave</span>'
-    '<span style="color:#f0c060;"> AI</span>'
+    '<span style="color:var(--gold);"> AI</span>'
     '</h1>'
     '<p class="hero-sub">⚡ Retrieval-Augmented Generation</p>'
     '</div>',
@@ -950,7 +1204,7 @@ st.markdown('<hr class="divider"/>', unsafe_allow_html=True)
 # ─────────────────────────────────────────────
 st.markdown(
     '<div class="card">'
-    '<div class="card-label" style="color:#f0c060;">▸ Step 1 — Choose Your Source</div>',
+    '<div class="card-label" style="color:var(--gold);">▸ Step 1 — Choose Your Source</div>',
     unsafe_allow_html=True,
 )
 
@@ -967,8 +1221,8 @@ if web_btn:
 
 src_type = st.session_state.source_type
 st.markdown(
-    f'<p style="font-family:JetBrains Mono,monospace;font-size:0.72rem;color:#3a4060;margin-top:0.5rem;">'
-    f'Active source: <span style="color:{"#e8704a" if src_type == "PDF Documents" else "#4ac8e8"};font-weight:600;">'
+    f'<p style="font-family:JetBrains Mono,monospace;font-size:0.72rem;color:var(--muted);margin-top:0.5rem;">'
+    f'Active source: <span style="color:{"var(--doc-accent)" if src_type == "PDF Documents" else "var(--web-accent)"};font-weight:600;">'
     f'{"📄 PDF Documents" if src_type == "PDF Documents" else "🌐 Website URL"}</span>'
     f'</p>',
     unsafe_allow_html=True,
@@ -1101,7 +1355,7 @@ mode_label = "Full Read" if is_full else f"MMR top-{TOP_K}"
 st.markdown(
     f'<div class="card">'
     f'<div class="card-label ask-label">💬 Step 3 — Ask Anything '
-    f'<span style="color:#3a4060;font-size:0.6rem;text-transform:none;letter-spacing:0.05em;">'
+    f'<span style="color:var(--muted2);font-size:0.6rem;text-transform:none;letter-spacing:0.05em;">'
     f'[ {mode_label} ]</span>'
     f'</div>',
     unsafe_allow_html=True,
@@ -1175,11 +1429,13 @@ if active_session and active_session.get("last_answer"):
     src_text    = active_session.get("label", "—")
     cache_badge = '<span class="cache-badge">⚡ cached</span>' if active_session.get("from_cache") else ""
 
+    accent_color = "var(--web-accent)" if src_is_url else "var(--doc-accent)"
+
     st.markdown(
         f'<div class="source-bar">'
         f'<span class="source-dot {dot_class}"></span>'
-        f'<span style="color:#3a4060;">Source:</span> '
-        f'<span style="color:{"#4ac8e8" if src_is_url else "#e8704a"}">'
+        f'<span style="color:var(--muted);">Source:</span> '
+        f'<span style="color:{accent_color}">'
         f'{src_text[:80]}{"…" if len(src_text) > 80 else ""}</span>'
         f'{cache_badge}'
         f'</div>',
@@ -1248,10 +1504,11 @@ if active_session and active_session.get("last_answer"):
 #  FOOTER
 # ─────────────────────────────────────────────
 st.markdown('<hr class="divider"/>', unsafe_allow_html=True)
+theme_indicator = "🌙 Dark" if st.session_state.dark_mode else "☀️ Light"
 st.markdown(
-    '<p style="font-family:JetBrains Mono,monospace;font-size:0.65rem;'
-    'color:#3a4060;text-align:center;letter-spacing:0.1em;">'
-    '· InfoWave AI · Powered by Groq ·'
-    '</p>',
+    f'<p style="font-family:JetBrains Mono,monospace;font-size:0.65rem;'
+    f'color:var(--muted);text-align:center;letter-spacing:0.1em;">'
+    f'· InfoWave AI · Powered by Groq · {theme_indicator} Mode ·'
+    f'</p>',
     unsafe_allow_html=True,
 )
