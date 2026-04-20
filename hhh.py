@@ -1551,7 +1551,7 @@ theme_indicator = "🌙 Dark" if st.session_state.dark_mode else "☀️ Light"
 st.markdown(
     f'<p style="font-family:JetBrains Mono,monospace;font-size:0.65rem;'
     f'color:var(--muted);text-align:center;letter-spacing:0.1em;">'
-    f'· InfoWave AI · Powered by Groq · {theme_indicator} Mode ·'
+    f'· InfoWave AI · Powered by Groq · '
     f'</p>',
     unsafe_allow_html=True,
 )
