@@ -1141,8 +1141,13 @@ with st.sidebar:
 
     model_choice = st.selectbox(
         "LLM Model",
-        ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "qwen/qwen3-32b"],
+        ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"],
         index=0,
+        help=(
+            "llama-3.3-70b-versatile, llama-3.1-8b-instant and qwen/qwen3-32b were "
+            "decommissioned by Groq on Sept 21, 2026. These are Groq's current "
+            "recommended replacements."
+        ),
     )
 
     embedding_choice = st.selectbox(
